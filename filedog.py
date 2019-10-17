@@ -1,6 +1,20 @@
 import os
 
-
+id_value_index = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+def generateID(someIntVal: int) -> str:
+    """Takes an integer number and creates a 5-digit alphanumeric id"""
+    id_offsets = []
+    for exp in range(4,0,-1):
+        div = len(id_value_index) ** exp
+        id_offsets.append(int(someIntVal/div))
+        someIntVal = someIntVal % div
+        if (exp == 1):
+            id_offsets.append(someIntVal)
+    
+    generated_id = ""
+    for x in id_offsets:
+        generated_id += id_value_index[x]
+    return generated_id
 
 def main():
     FILEDOG_BASE_DIR = os.path.dirname(os.path.realpath(__file__))
