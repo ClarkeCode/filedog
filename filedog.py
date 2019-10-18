@@ -16,8 +16,24 @@ def generateID(someIntVal: int) -> str:
         generated_id += id_value_index[x]
     return generated_id
 
+FILEDOG_BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+def on_created(event):
+    print(f"{event.src_path}' has been created!")
+    print(event.src_path.split("\\"))
+    print(os.path.splitext(event.src_path))
+    if event.src_path.split("\\")[-1] == "New Text Document.txt":
+        os.rename(event.src_path, FILEDOG_BASE_DIR + "\\something.txt")
+
+def on_deleted(event):
+    print(f"'{event.src_path}' was deleted!")
+def on_modified(event):
+    print(f"'{event.src_path}' has been modified")
+def on_moved(event):
+    print(f"'{event.src_path}' was moved to '{event.dest_path}'")
+
+
+
 def main():
-    FILEDOG_BASE_DIR = os.path.dirname(os.path.realpath(__file__))
     FILEDOG_DATA_DIR = f"{FILEDOG_BASE_DIR}\\filedog_settings"
     FILEDOG_TARGETLIST_JSON = f"{FILEDOG_DATA_DIR}\\targets.json"
 
@@ -30,6 +46,37 @@ def main():
         print(f"File located at: '{FILEDOG_TARGETLIST_JSON}'", end="\n\n")
         return None
 
+
+    from watchdog.events import RegexMatchingEventHandler
+    patterns = [r".*"]
+    ignore_patterns = [""]
+    ignore_directories = False
+    case_sensitive = False
+    my_event_handler = RegexMatchingEventHandler(ignore_directories=True)#patterns, ignore_patterns, ignore_directories, case_sensitive)
+
+    my_event_handler.on_created = on_created
+    my_event_handler.on_deleted = on_deleted
+    my_event_handler.on_modified = on_modified
+    my_event_handler.on_moved = on_moved
+    
+    
+    #from watchdog.observers import Observer
+    from watchdog.observers.read_directory_changes import WindowsApiObserver as Observer
+    path = "."
+    go_recursively = True
+    my_observer = Observer()
+    my_observer.schedule(my_event_handler, path, recursive=go_recursively)
+
+    import time
+
+    my_observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        my_observer.stop()
+        my_observer.join()
+        #do other cleanup behaviours
     return None
 
 if __name__ == "__main__":
