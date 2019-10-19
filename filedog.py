@@ -17,12 +17,21 @@ def generateID(someIntVal: int) -> str:
     return generated_id
 
 FILEDOG_BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+INCREMENT_NUMBER = 0
+def write_number_to_file(filePath: str, number: int) -> None:
+    with open(filePath, "w") as targetfile:
+        targetfile.write(str(number))
+
 def on_created(event):
     print(f"{event.src_path}' has been created!")
     print(event.src_path.split("\\"))
     print(os.path.splitext(event.src_path))
     if event.src_path.split("\\")[-1] == "New Text Document.txt":
-        os.rename(event.src_path, FILEDOG_BASE_DIR + "\\something.txt")
+        try:
+            os.rename(event.src_path, FILEDOG_BASE_DIR + "\\something.txt")
+        except FileExistsError:
+            print("Already exists")
+    print()
 
 def on_deleted(event):
     print(f"'{event.src_path}' was deleted!")
@@ -31,20 +40,31 @@ def on_modified(event):
 def on_moved(event):
     print(f"'{event.src_path}' was moved to '{event.dest_path}'")
 
-
-
 def main():
     FILEDOG_DATA_DIR = f"{FILEDOG_BASE_DIR}\\filedog_settings"
     FILEDOG_TARGETLIST_JSON = f"{FILEDOG_DATA_DIR}\\targets.json"
+    FILEDOG_INCREMENT_FILE = f"{FILEDOG_DATA_DIR}\\id_offset.txt"
 
     if not os.path.exists(FILEDOG_DATA_DIR):
         os.makedirs(FILEDOG_DATA_DIR)
+
+    if not os.path.exists(FILEDOG_INCREMENT_FILE):
+        write_number_to_file(FILEDOG_INCREMENT_FILE, 0)
+        INCREMENT_NUMBER = 0
+    else:
+        with open(FILEDOG_INCREMENT_FILE, "r") as targetfile:
+            INCREMENT_NUMBER = int(targetfile.readline())
+
+    PATHS_TO_MONITOR = []
     if not os.path.exists(FILEDOG_TARGETLIST_JSON):
         with open(FILEDOG_TARGETLIST_JSON, "w") as targetfile:
             targetfile.writelines(["[\n","\t\n","]"])
         print("Created missing target file, need to populate with paths to watch.")
         print(f"File located at: '{FILEDOG_TARGETLIST_JSON}'", end="\n\n")
         return None
+    else:
+        import json
+        PATHS_TO_MONITOR = json.load(open(FILEDOG_TARGETLIST_JSON))
 
 
     from watchdog.events import RegexMatchingEventHandler
