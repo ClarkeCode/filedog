@@ -33,12 +33,12 @@ def on_created(event):
             print("Already exists")
     print()
 
-def on_deleted(event):
-    print(f"'{event.src_path}' was deleted!")
-def on_modified(event):
-    print(f"'{event.src_path}' has been modified")
-def on_moved(event):
-    print(f"'{event.src_path}' was moved to '{event.dest_path}'")
+#def on_deleted(event):
+#    print(f"'{event.src_path}' was deleted!")
+#def on_modified(event):
+#    print(f"'{event.src_path}' has been modified")
+#def on_moved(event):
+#    print(f"'{event.src_path}' was moved to '{event.dest_path}'")
 
 def main():
     FILEDOG_DATA_DIR = f"{FILEDOG_BASE_DIR}\\filedog_settings"
@@ -58,7 +58,7 @@ def main():
     PATHS_TO_MONITOR = []
     if not os.path.exists(FILEDOG_TARGETLIST_JSON):
         with open(FILEDOG_TARGETLIST_JSON, "w") as targetfile:
-            targetfile.writelines(["[\n","\t\n","]"])
+            targetfile.writelines(["[\n", f"\t{FILEDOG_BASE_DIR}\n", "]"])
         print("Created missing target file, need to populate with paths to watch.")
         print(f"File located at: '{FILEDOG_TARGETLIST_JSON}'", end="\n\n")
         return None
@@ -75,27 +75,35 @@ def main():
     my_event_handler = RegexMatchingEventHandler(ignore_directories=True)#patterns, ignore_patterns, ignore_directories, case_sensitive)
 
     my_event_handler.on_created = on_created
-    my_event_handler.on_deleted = on_deleted
-    my_event_handler.on_modified = on_modified
-    my_event_handler.on_moved = on_moved
+    #my_event_handler.on_deleted = on_deleted
+    #my_event_handler.on_modified = on_modified
+    #my_event_handler.on_moved = on_moved
     
     
     #from watchdog.observers import Observer
     from watchdog.observers.read_directory_changes import WindowsApiObserver as Observer
-    path = "."
+    #path = "."
     go_recursively = True
-    my_observer = Observer()
-    my_observer.schedule(my_event_handler, path, recursive=go_recursively)
+    #my_observer = Observer()
+    #my_observer.schedule(my_event_handler, path, recursive=go_recursively)
+
+    OBSERVER_LIST = []
+    for path in PATHS_TO_MONITOR:
+        filesys_observer = Observer()
+        filesys_observer.schedule(my_event_handler, path, recursive=go_recursively)
+        OBSERVER_LIST.append(filesys_observer)
+    
+    for ob in OBSERVER_LIST:
+        ob.start()
 
     import time
-
-    my_observer.start()
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        my_observer.stop()
-        my_observer.join()
+        for ob in OBSERVER_LIST:
+            ob.stop()
+            ob.join()
         #do other cleanup behaviours
     return None
 
