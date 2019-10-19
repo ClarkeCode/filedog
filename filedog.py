@@ -1,10 +1,10 @@
 import os
 
-id_value_index = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+id_value_index = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 def generateID(someIntVal: int) -> str:
     """Takes an integer number and creates a 5-digit alphanumeric id"""
     id_offsets = []
-    for exp in range(4,0,-1):
+    for exp in range(5,0,-1):
         div = len(id_value_index) ** exp
         id_offsets.append(int(someIntVal/div))
         someIntVal = someIntVal % div
@@ -24,11 +24,17 @@ def write_number_to_file(filePath: str, number: int) -> None:
 
 def on_created(event):
     print(f"{event.src_path}' has been created!")
-    print(event.src_path.split("\\"))
-    print(os.path.splitext(event.src_path))
-    if event.src_path.split("\\")[-1] == "New Text Document.txt":
+    
+    file_path, file_extension = os.path.splitext(event.src_path)
+    file_path, file_name = file_path.rsplit("\\", 1)
+    print((file_path, file_name, file_extension))
+
+    if file_name == "image0":
         try:
-            os.rename(event.src_path, FILEDOG_BASE_DIR + "\\something.txt")
+            global INCREMENT_NUMBER
+            new_id = generateID(INCREMENT_NUMBER)
+            INCREMENT_NUMBER += 1
+            os.rename(event.src_path, f"{file_path}\\{new_id}{file_extension}")
         except FileExistsError:
             print("Already exists")
     print()
