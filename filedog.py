@@ -59,6 +59,7 @@ def main():
 
     #Loading info from JSON setting files
     #####################################
+    import json
     def displayFriendlyJSONErr(jsonError: json.decoder.JSONDecodeError):
         print(f"Encountered a JSON parsing error for targets.json")
         print(f"Malformed line is at line {jsonError.lineno}, column {jsonError.colno}: '{jsonError.msg}'")
@@ -73,7 +74,6 @@ def main():
         print(f"File located at: '{FILEDOG_TARGETLIST_JSON}'", end="\n\n")
         return None
     else:
-        import json
         try:
             PATHS_TO_MONITOR = json.load(open(FILEDOG_TARGETLIST_JSON))
         except json.decoder.JSONDecodeError as err:
